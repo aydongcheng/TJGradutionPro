@@ -9,7 +9,6 @@ import face_recognition
 import random
 
 
-
 def visualize_landmark(image_array, landmarks):
     """ plot landmarks on image
     :param image_array: numpy array of a single image
@@ -21,8 +20,6 @@ def visualize_landmark(image_array, landmarks):
     for facial_feature in landmarks.keys():
         draw.point(landmarks[facial_feature])
     imshow(origin_img)
-
-
 
 
 def align_face(image_array, landmarks):
@@ -52,8 +49,6 @@ def align_face(image_array, landmarks):
     rotate_matrix = cv2.getRotationMatrix2D(eye_center, angle, scale=1)
     rotated_img = cv2.warpAffine(image_array, rotate_matrix, (image_array.shape[1], image_array.shape[0]))
     return rotated_img, eye_center, angle
-
-
 
 
 def rotate(origin, point, angle, row):
@@ -91,6 +86,13 @@ def rotate_landmarks(landmarks, eye_center, angle, row):
     return rotated_landmarks
 
 
+def resize_image(image_array, size):
+    face_locations = face_recognition.face_locations(image_array)
+    top, right, bottom, left = face_locations[0]
+    face_size = (bottom - top) * (right - left)
+    ratio = pow(face_size / 0.7 / (size ** 2), 0.5)
+    new_size = (int(image_array.shape[0] / ratio), int(image_array.shape[1] / ratio))
+    return cv2.resize(image_array, new_size)
 
 
 def corp_face(image_array, size, landmarks):
@@ -121,8 +123,6 @@ def corp_face(image_array, size, landmarks):
     return cropped_img, left, top
 
 
-
-
 def transfer_landmark(landmarks, left, top):
     """transfer landmarks to fit the cropped face
     :param landmarks: dict of landmarks for facial parts as keys and tuple of coordinates as values
@@ -136,7 +136,6 @@ def transfer_landmark(landmarks, left, top):
             transferred_landmark = (landmark[0] - left, landmark[1] - top)
             transferred_landmarks[facial_feature].append(transferred_landmark)
     return transferred_landmarks
-
 
 
 def sp_noise(image, prob):
@@ -180,11 +179,11 @@ def gasuss_noise(image, mean=0, var=0.001):
 
     return out
 
+
 img_name = '1_0_0_20161219154724341.jpg'
 
-
 img = cv2.imread(img_name)
-img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
 # 添加椒盐噪声，噪声比例为 0.02
 out1 = sp_noise(img, prob=0.02)
@@ -210,31 +209,36 @@ def filter2d(im, kernel):
     入口参数：数组格式图像im, 卷积核kernel
     经过2D卷积操作完成去噪平滑
     '''
-    m, n = im.shape # 获取图片长宽
-    result = np.zeros(im.shape) # 创建0元素矩阵
+    m, n = im.shape  # 获取图片长宽
+    result = np.zeros(im.shape)  # 创建0元素矩阵
     w = kernel.shape[0]
-    l = (w-1) // 2
-    for x in range(l, m-l):
-        for y in range(l, n-l):
+    l = (w - 1) // 2
+    for x in range(l, m - l):
+        for y in range(l, n - l):
             # im[a:b, c:d]行列切片操作
-            result[x, y] = (im[x-l:x+l+1, y-l:y+l+1]*kernel).sum()
+            result[x, y] = (im[x - l:x + l + 1, y - l:y + l + 1] * kernel).sum()
     return result
+
 
 # 卷积核大小n须为奇数，这里采用均值滤波
 kernel = np.array([[1, 1, 1],
                    [1, 1, 1],
-                   [1, 1, 1]])*1/9
+                   [1, 1, 1]]) * 1 / 9
 
 imout = filter2d(images[2], kernel)
 
-plt.gray() # 灰度格式输出
-plt.subplot(1,2,1) # 1x2的图幅中的第1张图
+plt.gray()  # 灰度格式输出
+plt.subplot(1, 2, 1)  # 1x2的图幅中的第1张图
 plt.imshow(images[2])
-plt.subplot(1,2,2) # 1x2的图幅中的第2张图
+plt.subplot(1, 2, 2)  # 1x2的图幅中的第2张图
 plt.imshow(imout)
-plt.show() # 显示图像
+plt.show()  # 显示图像
 
-image_array = np.array(imout,dtype=np.uint8)
+image_array = np.array(img, dtype=np.uint8)
+image_array = resize_image(image_array, 100)
+imshow(image_array)
+plt.show()
+
 # image_array2 = img
 face_landmarks_list = face_recognition.face_landmarks(image_array, model="large")
 face_landmarks_dict = face_landmarks_list[0]
@@ -249,7 +253,7 @@ rotated_landmarks = rotate_landmarks(landmarks=face_landmarks_dict,
                                      eye_center=eye_center, angle=angle, row=image_array.shape[0])
 visualize_landmark(image_array=aligned_face, landmarks=rotated_landmarks)
 plt.show()
-cropped_face, left, top = corp_face(image_array=aligned_face, size=140, landmarks=rotated_landmarks)
+cropped_face, left, top = corp_face(image_array=aligned_face, size=100, landmarks=rotated_landmarks)
 Image.fromarray(cropped_face)
 transferred_landmarks = transfer_landmark(landmarks=rotated_landmarks, left=left, top=top)
 visualize_landmark(image_array=cropped_face, landmarks=transferred_landmarks)
