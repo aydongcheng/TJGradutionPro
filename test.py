@@ -1,7 +1,13 @@
+import glob
+import os
+
 import cv2
 import random
 import numpy as np
+import torch
+from PIL import Image
 from matplotlib import pyplot as plt
+from sklearn.model_selection import train_test_split
 
 
 def sp_noise(image, prob):
@@ -46,53 +52,43 @@ def gasuss_noise(image, mean=0, var=0.001):
     return out
 
 
-img = cv2.imread("1_0_0_20161219154724341.jpg")
-img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+imges = []
+count = 0
+for jpgfile in glob.glob(r'D:\demo\PyPro\TJGradutionPro\img\*.jpg'):
+    if (count % 10 == 0):
+        imges.append(cv2.cvtColor(cv2.imread(jpgfile), cv2.COLOR_RGB2BGR))
+    count += 1
 
-# 添加椒盐噪声，噪声比例为 0.02
-out1 = sp_noise(img, prob=0.02)
+noise_img = []
+count = 0
+for img in imges:
+    # 添加椒盐噪声，噪声比例为 0.02
+    out1 = sp_noise(img, prob=0.02)
 
-# 添加高斯噪声，均值为0，方差为0.01
-out2 = gasuss_noise(out1, mean=0, var=0.01)
+    # 添加高斯噪声，均值为0，方差为0.01
+    out2 = gasuss_noise(out1, mean=0, var=0.01)
+    noise_img.append(out2)
+X_train, X_test, y_train, y_test = train_test_split(noise_img, imges, test_size=0.2)
+count = 0
+for xt in X_train:
+    noise_img = Image.fromarray(xt)
+    noise_img.save(r'D:\demo\PyPro\TJGradutionPro\xtrain\{}.jpg'.format(str(count)))
+    count += 1
+count = 0
 
-# 显示图像
-titles = ['Original Image', 'Add Salt and Pepper noise', 'Add Gaussian noise']
-images = [img, out1, out2]
+for xt in X_test:
+    noise_img = Image.fromarray(xt)
+    noise_img.save(r'D:\demo\PyPro\TJGradutionPro\xtest\{}.jpg'.format(str(count)))
+    count += 1
 
-plt.figure(figsize=(20, 15))
-for i in range(3):
-    plt.subplot(1, 3, i + 1)
-    plt.imshow(images[i], 'gray')
-    plt.title(titles[i])
-    plt.xticks([]), plt.yticks([])
-plt.show()
+count = 0
+for xt in y_train:
+    noise_img = Image.fromarray(xt)
+    noise_img.save(r'D:\demo\PyPro\TJGradutionPro\ytrain\{}.jpg'.format(str(count)))
+    count += 1
 
-
-def filter2d(im, kernel):
-    '''
-    入口参数：数组格式图像im, 卷积核kernel
-    经过2D卷积操作完成去噪平滑
-    '''
-    m, n = im.shape # 获取图片长宽
-    result = np.zeros(im.shape) # 创建0元素矩阵
-    w = kernel.shape[0]
-    l = (w-1) // 2
-    for x in range(l, m-l):
-        for y in range(l, n-l):
-            # im[a:b, c:d]行列切片操作
-            result[x, y] = (im[x-l:x+l+1, y-l:y+l+1]*kernel).sum()
-    return result
-
-# 卷积核大小n须为奇数，这里采用均值滤波
-kernel = np.array([[1, 1, 1],
-                   [1, 1, 1],
-                   [1, 1, 1]])*1/9
-
-imout = filter2d(images[2], kernel)
-
-plt.gray() # 灰度格式输出
-plt.subplot(1,2,1) # 1x2的图幅中的第1张图
-plt.imshow(images[2])
-plt.subplot(1,2,2) # 1x2的图幅中的第2张图
-plt.imshow(imout)
-plt.show() # 显示图像
+count = 0
+for xt in y_test:
+    noise_img = Image.fromarray(xt)
+    noise_img.save(r'D:\demo\PyPro\TJGradutionPro\ytest\{}.jpg'.format(str(count)))
+    count += 1

@@ -180,7 +180,7 @@ def gasuss_noise(image, mean=0, var=0.001):
     return out
 
 
-img_name = '1_0_0_20161219154724341.jpg'
+img_name = '1_0_1_20170110212837862.jpg'
 
 img = cv2.imread(img_name)
 img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -234,7 +234,7 @@ plt.subplot(1, 2, 2)  # 1x2的图幅中的第2张图
 plt.imshow(imout)
 plt.show()  # 显示图像
 
-image_array = np.array(img, dtype=np.uint8)
+image_array = np.array(imout, dtype=np.uint8)
 image_array = resize_image(image_array, 100)
 imshow(image_array)
 plt.show()
