@@ -13,7 +13,7 @@ Xtest = []
 ytrain = []
 ytest = []
 
-for i in range(300):
+for i in range(50):
     Xtrain.append(
         cv2.cvtColor(cv2.imread(r'D:\demo\PyPro\TJGradutionProData\xtrain\{}.jpg'.format(str(i))), cv2.COLOR_RGB2BGR))
     ytrain.append(
