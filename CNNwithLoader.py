@@ -86,7 +86,7 @@ print(model)
 optimizer = torch.optim.Adam(model.parameters())
 loss_func = pytorch_msssim.SSIM()
 # loss_func = torch.nn.SmoothL1Loss()
-train_loader, test_loader = load_Data(50, 10)
+train_loader, test_loader = load_Data(700, 150)
 start = time.time()
 for epoch in range(10):
     epoch_start = time.time()
@@ -110,6 +110,7 @@ print('ALL time cost: {}'.format(str(end - start)))
 
 model.eval()
 eval_loss = 0.
+count = 0
 for batch_x, batch_y in test_loader:
     out = model(batch_x[0])
     loss = 1 - loss_func(out, batch_y[0])
@@ -120,6 +121,8 @@ for batch_x, batch_y in test_loader:
     out_img = out_img * 255 / maxValue
     mat = np.uint8(out_img)
     mat = mat.transpose(1, 2, 0)
-    plt.imshow(mat)
-    plt.show()
+    # plt.imshow(mat)
+    # plt.show()
+    mat.save(r'D:\demo\PyPro\TJGradutionProData\testResult\{}.jpg'.format(str(count)))
+    count +=1
 print('Test Loss: {:.6f}'.format(eval_loss / (len(test_loader))))

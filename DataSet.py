@@ -1,12 +1,8 @@
 import glob
-import os
-
 import cv2
 import random
 import numpy as np
-import torch
 from PIL import Image
-from matplotlib import pyplot as plt
 from sklearn.model_selection import train_test_split
 
 
