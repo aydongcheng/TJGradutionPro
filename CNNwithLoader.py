@@ -13,7 +13,6 @@ def Myloader(path):
     return cv2.cvtColor(cv2.imread(path), cv2.COLOR_RGB2BGR)
 
 
-# 得到一个包含路径与标签的列表
 def init_process(Xpath, ypath, len):
     data = []
     for i in range(len):
@@ -81,6 +80,7 @@ class Net(torch.nn.Module):
         return conv3_out
 
 
+torch.backends.cudnn.benchmark = True
 model = Net()
 print(model)
 
@@ -100,15 +100,8 @@ for epoch in range(10):
         train_loss += loss.item()
         optimizer.zero_grad()
         loss.backward()
-        try:
-            optimizer.step()
-        except RuntimeError as exception:
-            if "out of memory" in str(exception):
-                print("WARNING: out of memory")
-                if hasattr(torch.cuda, 'empty_cache'):
-                    torch.cuda.empty_cache()
-            else:
-                raise exception
+        optimizer.step()
+        torch.cuda.empty_cache()
     print('Train Loss: {:.6f}'.format(train_loss / (len(train_loader))))
     epoch_end = time.time()
     print('Time cost: {}'.format(str(epoch_end - epoch_start)))
