@@ -54,9 +54,12 @@ def gasuss_noise(image, mean=0, var=0.001):
 
 imges = []
 count = 0
-for jpgfile in glob.glob(r'D:\demo\PyPro\TJGradutionPro\img\*.jpg'):
-    if (count % 10 == 0):
-        imges.append(cv2.cvtColor(cv2.imread(jpgfile), cv2.COLOR_RGB2BGR))
+for jpgfile in glob.glob(r'D:\demo\PyPro\TJGradutionProData\img\*.jpg'):
+    if count % 10 == 0:
+        img = cv2.cvtColor(cv2.imread(jpgfile), cv2.COLOR_RGB2BGR)
+        if img.shape[0] * img.shape[1] < 90000 or img.shape[0] * img.shape[1] > 1500000:
+            continue
+        imges.append(img)
     count += 1
 
 noise_img = []
@@ -72,23 +75,23 @@ X_train, X_test, y_train, y_test = train_test_split(noise_img, imges, test_size=
 count = 0
 for xt in X_train:
     noise_img = Image.fromarray(xt)
-    noise_img.save(r'D:\demo\PyPro\TJGradutionPro\xtrain\{}.jpg'.format(str(count)))
+    noise_img.save(r'D:\demo\PyPro\TJGradutionProData\xtrain\{}.jpg'.format(str(count)))
     count += 1
 count = 0
 
 for xt in X_test:
     noise_img = Image.fromarray(xt)
-    noise_img.save(r'D:\demo\PyPro\TJGradutionPro\xtest\{}.jpg'.format(str(count)))
+    noise_img.save(r'D:\demo\PyPro\TJGradutionProData\xtest\{}.jpg'.format(str(count)))
     count += 1
 
 count = 0
 for xt in y_train:
     noise_img = Image.fromarray(xt)
-    noise_img.save(r'D:\demo\PyPro\TJGradutionPro\ytrain\{}.jpg'.format(str(count)))
+    noise_img.save(r'D:\demo\PyPro\TJGradutionProData\ytrain\{}.jpg'.format(str(count)))
     count += 1
 
 count = 0
 for xt in y_test:
     noise_img = Image.fromarray(xt)
-    noise_img.save(r'D:\demo\PyPro\TJGradutionPro\ytest\{}.jpg'.format(str(count)))
+    noise_img.save(r'D:\demo\PyPro\TJGradutionProData\ytest\{}.jpg'.format(str(count)))
     count += 1

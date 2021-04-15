@@ -69,14 +69,13 @@ class Net(torch.nn.Module):
 
     def forward(self, x):
         conv1_out = self.conv[0](x)
-        conv2_x = conv1_out
-        conv2_out = [conv1_out]
+        conv2_out = conv1_out
         for d in range(self.block_deep):
+            conv2_x = conv2_out
             for i in range(self.block_size):
-                conv2_out.append(self.conv[i + d * self.block_size + 1](conv2_out[i + d * self.block_size]))
-            conv2_out[(d + 1) * self.block_size] += conv2_x
-            conv2_x = conv2_out[(d + 1) * self.block_size]
-        conv3_out = self.conv[1 + self.block_deep * self.block_size](conv2_out[len(conv2_out) - 1])
+                conv2_out = self.conv[i + d * self.block_size + 1](conv2_out)
+            conv2_out += conv2_x
+        conv3_out = self.conv[1 + self.block_deep * self.block_size](conv2_out)
         return conv3_out
 
 
@@ -87,7 +86,7 @@ print(model)
 optimizer = torch.optim.Adam(model.parameters())
 loss_func = pytorch_msssim.SSIM()
 # loss_func = torch.nn.SmoothL1Loss()
-train_loader, test_loader = load_Data(200, 10)
+train_loader, test_loader = load_Data(50, 10)
 start = time.time()
 for epoch in range(10):
     epoch_start = time.time()
@@ -101,6 +100,7 @@ for epoch in range(10):
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
+        del loss, out
         torch.cuda.empty_cache()
     print('Train Loss: {:.6f}'.format(train_loss / (len(train_loader))))
     epoch_end = time.time()
