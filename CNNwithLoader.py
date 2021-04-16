@@ -5,6 +5,7 @@ import pytorch_msssim
 import torch
 import torchvision
 import matplotlib.pyplot as plt
+from PIL import Image
 from pandas import np
 from torch.utils.data import Dataset, DataLoader
 
@@ -108,6 +109,9 @@ for epoch in range(10):
 end = time.time()
 print('ALL time cost: {}'.format(str(end - start)))
 
+torch.save(model, 'cnn.pkl')
+torch.save(model.state_dict(), 'cnn_para.pkl')
+
 model.eval()
 eval_loss = 0.
 count = 0
@@ -123,6 +127,7 @@ for batch_x, batch_y in test_loader:
     mat = mat.transpose(1, 2, 0)
     # plt.imshow(mat)
     # plt.show()
+    mat = Image.fromarray(mat)
     mat.save(r'D:\demo\PyPro\TJGradutionProData\testResult\{}.jpg'.format(str(count)))
-    count +=1
+    count += 1
 print('Test Loss: {:.6f}'.format(eval_loss / (len(test_loader))))
