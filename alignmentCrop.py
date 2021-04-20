@@ -1,3 +1,5 @@
+import glob
+
 import cv2
 import numpy as np
 import math
@@ -88,10 +90,12 @@ def rotate_landmarks(landmarks, eye_center, angle, row):
 
 def resize_image(image_array, size):
     face_locations = face_recognition.face_locations(image_array)
+    if len(face_locations) == 0:
+        return []
     top, right, bottom, left = face_locations[0]
     face_size = (bottom - top) * (right - left)
     ratio = pow(face_size / 0.7 / (size ** 2), 0.5)
-    new_size = (int(image_array.shape[0] / ratio), int(image_array.shape[1] / ratio))
+    new_size = (int(image_array.shape[1] / ratio), int(image_array.shape[0] / ratio))
     return cv2.resize(image_array, new_size)
 
 
@@ -180,81 +184,38 @@ def gasuss_noise(image, mean=0, var=0.001):
     return out
 
 
-img_name = '1_0_1_20170110212837862.jpg'
+imges = []
+count = 0
+for jpgfile in glob.glob(r'D:\demo\PyPro\TJGradutionProData\img\*.jpg'):
+    img = cv2.cvtColor(cv2.imread(jpgfile), cv2.COLOR_RGB2BGR)
+    if 90000 < img.shape[0] * img.shape[1]:
+        image_array = np.array(img, dtype=np.uint8)
+        image_array = resize_image(image_array, 200)
+        if len(image_array) == 0:
+            continue
+        # imshow(image_array)
+        # plt.show()
 
-img = cv2.imread(img_name)
-img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-
-# 添加椒盐噪声，噪声比例为 0.02
-out1 = sp_noise(img, prob=0.02)
-
-# 添加高斯噪声，均值为0，方差为0.01
-out2 = gasuss_noise(out1, mean=0, var=0.01)
-
-# 显示图像
-titles = ['Original Image', 'Add Salt and Pepper noise', 'Add Gaussian noise']
-images = [img, out1, out2]
-
-plt.figure(figsize=(20, 15))
-for i in range(3):
-    plt.subplot(1, 3, i + 1)
-    plt.imshow(images[i], 'gray')
-    plt.title(titles[i])
-    plt.xticks([]), plt.yticks([])
-plt.show()
-
-
-def filter2d(im, kernel):
-    '''
-    入口参数：数组格式图像im, 卷积核kernel
-    经过2D卷积操作完成去噪平滑
-    '''
-    m, n = im.shape  # 获取图片长宽
-    result = np.zeros(im.shape)  # 创建0元素矩阵
-    w = kernel.shape[0]
-    l = (w - 1) // 2
-    for x in range(l, m - l):
-        for y in range(l, n - l):
-            # im[a:b, c:d]行列切片操作
-            result[x, y] = (im[x - l:x + l + 1, y - l:y + l + 1] * kernel).sum()
-    return result
-
-
-# 卷积核大小n须为奇数，这里采用均值滤波
-kernel = np.array([[1, 1, 1],
-                   [1, 1, 1],
-                   [1, 1, 1]]) * 1 / 9
-
-imout = filter2d(images[2], kernel)
-
-plt.gray()  # 灰度格式输出
-plt.subplot(1, 2, 1)  # 1x2的图幅中的第1张图
-plt.imshow(images[2])
-plt.subplot(1, 2, 2)  # 1x2的图幅中的第2张图
-plt.imshow(imout)
-plt.show()  # 显示图像
-
-image_array = np.array(imout, dtype=np.uint8)
-image_array = resize_image(image_array, 100)
-imshow(image_array)
-plt.show()
-
-# image_array2 = img
-face_landmarks_list = face_recognition.face_landmarks(image_array, model="large")
-face_landmarks_dict = face_landmarks_list[0]
-print(face_landmarks_dict, end=" ")
-visualize_landmark(image_array=image_array, landmarks=face_landmarks_dict)
-plt.show()
-aligned_face, eye_center, angle = align_face(image_array=image_array, landmarks=face_landmarks_dict)
-Image.fromarray(np.hstack((image_array, aligned_face)))
-visualize_landmark(image_array=aligned_face, landmarks=face_landmarks_dict)
-plt.show()
-rotated_landmarks = rotate_landmarks(landmarks=face_landmarks_dict,
-                                     eye_center=eye_center, angle=angle, row=image_array.shape[0])
-visualize_landmark(image_array=aligned_face, landmarks=rotated_landmarks)
-plt.show()
-cropped_face, left, top = corp_face(image_array=aligned_face, size=100, landmarks=rotated_landmarks)
-Image.fromarray(cropped_face)
-transferred_landmarks = transfer_landmark(landmarks=rotated_landmarks, left=left, top=top)
-visualize_landmark(image_array=cropped_face, landmarks=transferred_landmarks)
-plt.show()
+        face_landmarks_list = face_recognition.face_landmarks(image_array, model="large")
+        if len(face_landmarks_list) == 0:
+            continue
+        face_landmarks_dict = face_landmarks_list[0]
+        # print(face_landmarks_dict, end=" ")
+        # visualize_landmark(image_array=image_array, landmarks=face_landmarks_dict)
+        # plt.show()
+        aligned_face, eye_center, angle = align_face(image_array=image_array, landmarks=face_landmarks_dict)
+        # Image.fromarray(np.hstack((image_array, aligned_face)))
+        # visualize_landmark(image_array=aligned_face, landmarks=face_landmarks_dict)
+        # plt.show()
+        rotated_landmarks = rotate_landmarks(landmarks=face_landmarks_dict,
+                                             eye_center=eye_center, angle=angle, row=image_array.shape[0])
+        # visualize_landmark(image_array=aligned_face, landmarks=rotated_landmarks)
+        # plt.show()
+        cropped_face, left, top = corp_face(image_array=aligned_face, size=200, landmarks=rotated_landmarks)
+        finish_img = Image.fromarray(cropped_face)
+        finish_img.save(r'D:\demo\PyPro\TJGradutionProData\cropped\{}.jpg'.format(str(count)))
+        count+=1
+        # plt.imshow(Image.fromarray(cropped_face))
+        # transferred_landmarks = transfer_landmark(landmarks=rotated_landmarks, left=left, top=top)
+        # visualize_landmark(image_array=cropped_face, landmarks=transferred_landmarks)
+        # plt.show()
