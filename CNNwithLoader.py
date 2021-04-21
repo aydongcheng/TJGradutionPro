@@ -10,7 +10,7 @@ from torch.utils.data import Dataset, DataLoader
 
 
 def Myloader(path):
-    return cv2.cvtColor(cv2.imread(path), cv2.COLOR_RGB2BGR)
+    return Image.open(path).convert('RGB')
 
 
 def init_process(Xpath, ypath, len):
@@ -40,14 +40,17 @@ class MyDataset(Dataset):
 
 
 def load_Data(train_size, test_size):
-    transforms = torchvision.transforms.ToTensor()
+    transforms = torchvision.transforms.Compose([
+        torchvision.transforms.Resize((200, 200)),
+        torchvision.transforms.ToTensor()
+    ])
     root = r'D:\demo\PyPro\TJGradutionProData'
     train_data = init_process(root + r'\xtrain\%d.jpg', root + r'\ytrain\%d.jpg', train_size)
     train_data = MyDataset(train_data, transform=transforms, loder=Myloader)
     test_data = init_process(root + r'\xtest\%d.jpg', root + r'\ytest\%d.jpg', test_size)
     test_data = MyDataset(test_data, transform=transforms, loder=Myloader)
 
-    train_data = DataLoader(dataset=train_data, batch_size=1, num_workers=0, pin_memory=True)
+    train_data = DataLoader(dataset=train_data, batch_size=10, num_workers=0, pin_memory=True)
     test_data = DataLoader(dataset=test_data, batch_size=1, num_workers=0, pin_memory=True)
 
     return train_data, test_data
@@ -57,13 +60,14 @@ class Net(torch.nn.Module):
     def __init__(self):
         super(Net, self).__init__()
         self.block_size = 3
-        self.block_deep = 4
+        self.block_deep = 5
         self.conv = torch.nn.Sequential()
         self.conv.add_module("conv1", torch.nn.Sequential(torch.nn.Conv2d(3, 64, (3, 3), 1, 1), torch.nn.ReLU()))
         for d in range(self.block_deep):
             for i in range(self.block_size):
                 self.conv.add_module("conv2 " + str(d * self.block_size + i), torch.nn.Sequential(
                     torch.nn.Conv2d(64, 64, (3, 3), 1, 1),
+                    torch.nn.BatchNorm2d(64),
                     torch.nn.ReLU()))
         self.conv.add_module("conv3", torch.nn.Sequential(torch.nn.Conv2d(64, 3, (3, 3), 1, 1)))
 
@@ -86,7 +90,7 @@ print(model)
 optimizer = torch.optim.Adam(model.parameters())
 # loss_func = pytorch_msssim.SSIM()
 loss_func = torch.nn.L1Loss()
-train_loader, test_loader = load_Data(1000, 200)
+train_loader, test_loader = load_Data(5000, 200)
 start = time.time()
 for epoch in range(30):
     epoch_start = time.time()
@@ -118,18 +122,21 @@ torch.save(model.state_dict(), 'cnn_para.pkl')
 model.eval()
 eval_loss = 0.
 count = 0
-for batch_x, batch_y in test_loader:
-    out = model(batch_x[0])
-    loss = loss_func(out, batch_y[0])
-    eval_loss += loss.item()
-    out_img = out.squeeze(0).detach().numpy()
-    maxValue = out_img.max()
-    out_img = out_img * 255 / maxValue
-    mat = np.uint8(out_img)
-    mat = mat.transpose(1, 2, 0)
-    # plt.imshow(mat)
-    # plt.show()
-    mat = Image.fromarray(mat)
-    mat.save(r'D:\demo\PyPro\TJGradutionProData\testResult\{}.jpg'.format(str(count)))
-    count += 1
-print('Test Loss: {:.6f}'.format(eval_loss / (len(test_loader))))
+with torch.no_grad():
+    for batch_x, batch_y in test_loader:
+        batch_x = batch_x.cuda()
+        batch_y = batch_y.cuda()
+        out = model(batch_x[0])
+        loss = loss_func(out, batch_y[0])
+        eval_loss += loss.item()
+        out_img = out.squeeze(0).detach().numpy()
+        maxValue = out_img.max()
+        out_img = out_img * 255 / maxValue
+        mat = np.uint8(out_img)
+        mat = mat.transpose(1, 2, 0)
+        # plt.imshow(mat)
+        # plt.show()
+        mat = Image.fromarray(mat)
+        mat.save(r'D:\demo\PyPro\TJGradutionProData\testResult\{}.jpg'.format(str(count)))
+        count += 1
+    print('Test Loss: {:.6f}'.format(eval_loss / (len(test_loader))))

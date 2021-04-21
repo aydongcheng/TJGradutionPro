@@ -49,10 +49,9 @@ def gasuss_noise(image, mean=0, var=0.001):
 
 
 imges = []
-for jpgfile in glob.glob(r'D:\demo\PyPro\TJGradutionProData\img\*.jpg'):
+for jpgfile in glob.glob(r'D:\demo\PyPro\TJGradutionProData\cropped\*.jpg'):
     img = cv2.cvtColor(cv2.imread(jpgfile), cv2.COLOR_RGB2BGR)
-    if 90000 < img.shape[0] * img.shape[1] < 1500000:
-        imges.append(img)
+    imges.append(img)
 
 noise_img = []
 count = 0
@@ -63,7 +62,7 @@ for img in imges:
     # 添加高斯噪声，均值为0，方差为0.01
     out2 = gasuss_noise(out1, mean=0, var=0.01)
     noise_img.append(out2)
-X_train, X_test, y_train, y_test = train_test_split(noise_img, imges, test_size=0.2, shuffle= True)
+X_train, X_test, y_train, y_test = train_test_split(noise_img, imges, test_size=0.1, shuffle= True)
 count = 0
 for xt in X_train:
     noise_img = Image.fromarray(xt)
