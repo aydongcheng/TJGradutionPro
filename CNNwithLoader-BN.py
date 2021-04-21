@@ -40,14 +40,17 @@ class MyDataset(Dataset):
 
 
 def load_Data(train_size, test_size):
-    transforms = torchvision.transforms.ToTensor()
+    transforms = torchvision.transforms.Compose([
+        torchvision.transforms.Resize((200, 200)),
+        torchvision.transforms.ToTensor()
+    ])
     root = r'D:\demo\PyPro\TJGradutionProData'
     train_data = init_process(root + r'\xtrain\%d.jpg', root + r'\ytrain\%d.jpg', train_size)
     train_data = MyDataset(train_data, transform=transforms, loder=Myloader)
     test_data = init_process(root + r'\xtest\%d.jpg', root + r'\ytest\%d.jpg', test_size)
     test_data = MyDataset(test_data, transform=transforms, loder=Myloader)
 
-    train_data = DataLoader(dataset=train_data, batch_size=1, num_workers=0, pin_memory=True)
+    train_data = DataLoader(dataset=train_data, batch_size=50, num_workers=0, pin_memory=True)
     test_data = DataLoader(dataset=test_data, batch_size=1, num_workers=0, pin_memory=True)
 
     return train_data, test_data
@@ -64,6 +67,7 @@ class Net(torch.nn.Module):
             for i in range(self.block_size):
                 self.conv.add_module("conv2 " + str(d * self.block_size + i), torch.nn.Sequential(
                     torch.nn.Conv2d(64, 64, (3, 3), 1, 1),
+                    torch.nn.BatchNorm2d(64),
                     torch.nn.ReLU()))
         self.conv.add_module("conv3", torch.nn.Sequential(torch.nn.Conv2d(64, 3, (3, 3), 1, 1)))
 
