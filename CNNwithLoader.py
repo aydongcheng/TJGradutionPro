@@ -50,7 +50,7 @@ def load_Data(train_size, test_size):
     test_data = init_process(root + r'\xtest\%d.jpg', root + r'\ytest\%d.jpg', test_size)
     test_data = MyDataset(test_data, transform=transforms, loder=Myloader)
 
-    train_data = DataLoader(dataset=train_data, batch_size=10, num_workers=0, pin_memory=True)
+    train_data = DataLoader(dataset=train_data, batch_size=50, num_workers=0, pin_memory=True)
     test_data = DataLoader(dataset=test_data, batch_size=1, num_workers=0, pin_memory=True)
 
     return train_data, test_data
@@ -116,8 +116,8 @@ for epoch in range(30):
 end = time.time()
 print('ALL time cost: {}'.format(str(end - start)))
 
-torch.save(model, 'cnn.pkl')
-torch.save(model.state_dict(), 'cnn_para.pkl')
+torch.save(model, 'cnn-bn10.pkl')
+torch.save(model.state_dict(), 'cnn_para-bn10.pkl')
 
 model.eval()
 eval_loss = 0.
@@ -129,7 +129,7 @@ with torch.no_grad():
         out = model(batch_x[0])
         loss = loss_func(out, batch_y[0])
         eval_loss += loss.item()
-        out_img = out.squeeze(0).detach().numpy()
+        out_img = out.cpu().squeeze(0).detach().numpy()
         maxValue = out_img.max()
         out_img = out_img * 255 / maxValue
         mat = np.uint8(out_img)
@@ -137,6 +137,6 @@ with torch.no_grad():
         # plt.imshow(mat)
         # plt.show()
         mat = Image.fromarray(mat)
-        mat.save(r'D:\demo\PyPro\TJGradutionProData\testResult\{}.jpg'.format(str(count)))
+        mat.save(r'D:\demo\PyPro\TJGradutionProData\testResult-bn10\{}.jpg'.format(str(count)))
         count += 1
     print('Test Loss: {:.6f}'.format(eval_loss / (len(test_loader))))

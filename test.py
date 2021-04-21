@@ -7,7 +7,7 @@ import torchvision
 
 
 def Myloader(path):
-    return cv2.cvtColor(cv2.imread(path), cv2.COLOR_RGB2BGR)
+    return Image.open(path).convert('RGB')
 
 
 def init_process(Xpath, ypath, len):
@@ -37,14 +37,17 @@ class MyDataset(Dataset):
 
 
 def load_Data(train_size, test_size):
-    transforms = torchvision.transforms.ToTensor()
+    transforms = torchvision.transforms.Compose([
+        torchvision.transforms.Resize((200, 200)),
+        torchvision.transforms.ToTensor()
+    ])
     root = r'D:\demo\PyPro\TJGradutionProData'
     train_data = init_process(root + r'\xtrain\%d.jpg', root + r'\ytrain\%d.jpg', train_size)
     train_data = MyDataset(train_data, transform=transforms, loder=Myloader)
     test_data = init_process(root + r'\xtest\%d.jpg', root + r'\ytest\%d.jpg', test_size)
     test_data = MyDataset(test_data, transform=transforms, loder=Myloader)
 
-    train_data = DataLoader(dataset=train_data, batch_size=1, num_workers=0, pin_memory=True)
+    train_data = DataLoader(dataset=train_data, batch_size=50, num_workers=0, pin_memory=True)
     test_data = DataLoader(dataset=test_data, batch_size=1, num_workers=0, pin_memory=True)
 
     return train_data, test_data
@@ -92,7 +95,7 @@ class Net(torch.nn.Module):
 
 train_loader, test_loader = load_Data(5000, 200)
 loss_func = torch.nn.L1Loss()
-model = torch.load('cnn.pkl')
+model = torch.load('cnn-bn10.pkl')
 model.eval()
 eval_loss = 0.
 count = 0
@@ -111,6 +114,6 @@ with torch.no_grad():
         # plt.imshow(mat)
         # plt.show()
         mat = Image.fromarray(mat)
-        mat.save(r'D:\demo\PyPro\TJGradutionProData\testResult\{}.jpg'.format(str(count)))
+        mat.save(r'D:\demo\PyPro\TJGradutionProData\testResult-bn10\{}.jpg'.format(str(count)))
         count += 1
     print('Test Loss: {:.6f}'.format(eval_loss / (len(test_loader))))
