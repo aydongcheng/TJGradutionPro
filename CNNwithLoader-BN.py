@@ -30,9 +30,9 @@ class MyDataset(Dataset):
         noise_img, clean_img = self.data[item]
         noise_img = self.loader(noise_img)
         # noise_img = cv2.medianBlur(noise_img, 3)
-        noise_img = self.transform(noise_img).unsqueeze(0)
+        noise_img = self.transform(noise_img)
         clean_img = self.loader(clean_img)
-        clean_img = self.transform(clean_img).unsqueeze(0)
+        clean_img = self.transform(clean_img)
         return noise_img, clean_img
 
     def __len__(self):
@@ -50,7 +50,7 @@ def load_Data(train_size, test_size):
     test_data = init_process(root + r'\xtest\%d.jpg', root + r'\ytest\%d.jpg', test_size)
     test_data = MyDataset(test_data, transform=transforms, loder=Myloader)
 
-    train_data = DataLoader(dataset=train_data, batch_size=50, num_workers=0, pin_memory=True)
+    train_data = DataLoader(dataset=train_data, batch_size=4, num_workers=0, pin_memory=True)
     test_data = DataLoader(dataset=test_data, batch_size=1, num_workers=0, pin_memory=True)
 
     return train_data, test_data
@@ -86,11 +86,12 @@ class Net(torch.nn.Module):
 torch.backends.cudnn.benchmark = True
 model = Net().cuda()
 print(model)
-
+train_size = 5000
+test_size = 200
 optimizer = torch.optim.Adam(model.parameters())
 # loss_func = pytorch_msssim.SSIM()
 loss_func = torch.nn.L1Loss()
-train_loader, test_loader = load_Data(5000, 200)
+train_loader, test_loader = load_Data(train_size, test_size)
 start = time.time()
 for epoch in range(30):
     epoch_start = time.time()
@@ -100,24 +101,24 @@ for epoch in range(30):
     for batch_x, batch_y in train_loader:
         batch_x = batch_x.cuda()
         batch_y = batch_y.cuda()
-        out = model(torch.autograd.Variable(batch_x[0], requires_grad=True))
-        loss = loss_func(out, batch_y[0])
+        out = model(torch.autograd.Variable(batch_x, requires_grad=True))
+        loss = loss_func(out, batch_y)
         train_loss += loss.item()
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
         del loss, out, batch_x, batch_y
         torch.cuda.empty_cache()
-    print('Train Loss: {:.6f}'.format(train_loss / (len(train_loader))))
+    print('Train Loss: {:.6f}'.format(train_loss / len(train_loader)))
     epoch_end = time.time()
     print('Time cost: {}'.format(str(epoch_end - epoch_start)))
-    if (train_loss / (len(train_loader))) < 0.01:
+    if (train_loss / len(train_loader)) < 0.01:
         break
 end = time.time()
 print('ALL time cost: {}'.format(str(end - start)))
 
-torch.save(model, 'cnn-bn10.pkl')
-torch.save(model.state_dict(), 'cnn_para-bn10.pkl')
+torch.save(model, 'cnn-bn4.pkl')
+torch.save(model.state_dict(), 'cnn_para-bn4.pkl')
 
 model.eval()
 eval_loss = 0.
@@ -126,8 +127,8 @@ with torch.no_grad():
     for batch_x, batch_y in test_loader:
         batch_x = batch_x.cuda()
         batch_y = batch_y.cuda()
-        out = model(batch_x[0])
-        loss = loss_func(out, batch_y[0])
+        out = model(batch_x)
+        loss = loss_func(out, batch_y)
         eval_loss += loss.item()
         out_img = out.cpu().squeeze(0).detach().numpy()
         maxValue = out_img.max()
@@ -137,6 +138,6 @@ with torch.no_grad():
         # plt.imshow(mat)
         # plt.show()
         mat = Image.fromarray(mat)
-        mat.save(r'D:\demo\PyPro\TJGradutionProData\testResult-bn10\{}.jpg'.format(str(count)))
+        mat.save(r'D:\demo\PyPro\TJGradutionProData\testResult-bn4\{}.jpg'.format(str(count)))
         count += 1
-    print('Test Loss: {:.6f}'.format(eval_loss / (len(test_loader))))
+    print('Test Loss: {:.6f}'.format(eval_loss / test_size))
