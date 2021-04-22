@@ -48,7 +48,7 @@ def gasuss_noise(image, mean=0, var=0.001):
     return out
 
 
-for jpgfile in glob.glob(r'D:\demo\PyPro\TJGradutionProData\img\*.jpg'):
+for jpgfile in glob.glob(r'D:\demo\PyPro\TJGradutionProData\img-filter\*.jpg'):
     img = cv2.cvtColor(cv2.imread(jpgfile), cv2.COLOR_RGB2BGR)
     # 添加椒盐噪声，噪声比例为 0.02
     out1 = sp_noise(img, prob=0.02)
