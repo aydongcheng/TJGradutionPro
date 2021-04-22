@@ -171,7 +171,7 @@ for jpgfile in glob.glob(r'D:\demo\PyPro\TJGradutionProData\img\*.jpg'):
         # plt.show()
         cropped_face, left, top = corp_face(image_array=aligned_face, size=200, landmarks=rotated_landmarks)
         finish_img = Image.fromarray(cropped_face)
-        finish_img.save(r'D:\demo\PyPro\TJGradutionProData\img-cropped\{0}.jpg'.format(img_name))
+        finish_img.save(r'D:\demo\PyPro\TJGradutionProData\img-cropped\{0}'.format(img_name))
         count += 1
         # plt.imshow(Image.fromarray(cropped_face))
         # transferred_landmarks = transfer_landmark(landmarks=rotated_landmarks, left=left, top=top)

@@ -56,4 +56,4 @@ for jpgfile in glob.glob(r'D:\demo\PyPro\TJGradutionProData\img\*.jpg'):
     out2 = gasuss_noise(out1, mean=0, var=0.01)
     img_name = jpgfile.split('\\')[-1]
     out2 = Image.fromarray(out2)
-    out2.save(r'D:\demo\PyPro\TJGradutionProData\img-noise\{0}.jpg'.format(img_name))
+    out2.save(r'D:\demo\PyPro\TJGradutionProData\img-noise\{0}'.format(img_name))

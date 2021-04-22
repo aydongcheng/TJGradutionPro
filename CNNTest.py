@@ -59,4 +59,4 @@ with torch.no_grad():
         # plt.imshow(mat)
         # plt.show()
         mat = Image.fromarray(mat)
-        mat.save(r'D:\demo\PyPro\TJGradutionProData\testResult-bn10\{}.jpg'.format(img_name))
+        mat.save(r'D:\demo\PyPro\TJGradutionProData\testResult-bn10\{}'.format(img_name))
