@@ -1,3 +1,5 @@
+import glob
+
 import torch
 import cv2
 from PIL import Image
@@ -10,61 +12,9 @@ def Myloader(path):
     return Image.open(path).convert('RGB')
 
 
-def init_process(Xpath, ypath, len):
-    data = []
-    for i in range(len):
-        data.append([Xpath % i, ypath % i])
-    return data
-
-
-class MyDataset(Dataset):
-    def __init__(self, data, transform, loder):
-        self.data = data
-        self.transform = transform
-        self.loader = loder
-
-    def __getitem__(self, item):
-        noise_img, clean_img = self.data[item]
-        noise_img = self.loader(noise_img)
-        # noise_img = cv2.medianBlur(noise_img, 3)
-        noise_img = self.transform(noise_img).unsqueeze(0)
-        clean_img = self.loader(clean_img)
-        clean_img = self.transform(clean_img).unsqueeze(0)
-        return noise_img, clean_img
-
-    def __len__(self):
-        return len(self.data)
-
-
-def load_Data(train_size, test_size):
-    transforms = torchvision.transforms.Compose([
-        torchvision.transforms.Resize((200, 200)),
-        torchvision.transforms.ToTensor()
-    ])
-    root = r'D:\demo\PyPro\TJGradutionProData'
-    train_data = init_process(root + r'\xtrain\%d.jpg', root + r'\ytrain\%d.jpg', train_size)
-    train_data = MyDataset(train_data, transform=transforms, loder=Myloader)
-    test_data = init_process(root + r'\xtest\%d.jpg', root + r'\ytest\%d.jpg', test_size)
-    test_data = MyDataset(test_data, transform=transforms, loder=Myloader)
-
-    train_data = DataLoader(dataset=train_data, batch_size=50, num_workers=0, pin_memory=True)
-    test_data = DataLoader(dataset=test_data, batch_size=1, num_workers=0, pin_memory=True)
-
-    return train_data, test_data
-
-
-def load_Data(train_size, test_size):
-    transforms = torchvision.transforms.ToTensor()
-    root = r'D:\demo\PyPro\TJGradutionProData'
-    train_data = init_process(root + r'\xtrain\%d.jpg', root + r'\ytrain\%d.jpg', train_size)
-    train_data = MyDataset(train_data, transform=transforms, loder=Myloader)
-    test_data = init_process(root + r'\xtest\%d.jpg', root + r'\ytest\%d.jpg', test_size)
-    test_data = MyDataset(test_data, transform=transforms, loder=Myloader)
-
-    train_data = DataLoader(dataset=train_data, batch_size=1, num_workers=0, pin_memory=True)
-    test_data = DataLoader(dataset=test_data, batch_size=1, num_workers=0, pin_memory=True)
-
-    return train_data, test_data
+noise_path = []
+for jpgfile in glob.glob(r'D:\demo\PyPro\TJGradutionProData\cropped_lable\*.jpg'):
+    noise_path.append(jpgfile)
 
 
 class Net(torch.nn.Module):
@@ -93,19 +43,14 @@ class Net(torch.nn.Module):
         return conv3_out
 
 
-train_loader, test_loader = load_Data(5000, 200)
-loss_func = torch.nn.L1Loss()
 model = torch.load('cnn-bn10.pkl')
 model.eval()
-eval_loss = 0.
-count = 0
 with torch.no_grad():
-    for batch_x, batch_y in test_loader:
+    for path in noise_path:
+        img_name = path.split('\\')[-1]
+        batch_x = torchvision.transforms.ToTensor()(Myloader(path)).unsqueeze(0)
         batch_x = batch_x.cuda()
-        batch_y = batch_y.cuda()
-        out = model(batch_x[0])
-        loss = loss_func(out, batch_y[0])
-        eval_loss += loss.item()
+        out = model(batch_x)
         out_img = out.cpu().squeeze(0).detach().numpy()
         maxValue = out_img.max()
         out_img = out_img * 255 / maxValue
@@ -114,6 +59,4 @@ with torch.no_grad():
         # plt.imshow(mat)
         # plt.show()
         mat = Image.fromarray(mat)
-        mat.save(r'D:\demo\PyPro\TJGradutionProData\testResult-bn10\{}.jpg'.format(str(count)))
-        count += 1
-    print('Test Loss: {:.6f}'.format(eval_loss / (len(test_loader))))
+        mat.save(r'D:\demo\PyPro\TJGradutionProData\testResult-bn10\{}.jpg'.format(img_name))

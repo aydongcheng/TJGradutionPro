@@ -1,5 +1,4 @@
 import glob
-
 import cv2
 import numpy as np
 import math
@@ -142,53 +141,12 @@ def transfer_landmark(landmarks, left, top):
     return transferred_landmarks
 
 
-def sp_noise(image, prob):
-    '''
-    添加椒盐噪声
-    prob:噪声比例
-    '''
-
-    output = np.zeros(image.shape, np.uint8)
-    thres = 1 - prob
-
-    for i in range(image.shape[0]):
-        for j in range(image.shape[1]):
-            rdn = random.random()
-            if rdn < prob:
-                output[i][j] = 0
-            elif rdn > thres:
-                output[i][j] = 255
-            else:
-                output[i][j] = image[i][j]
-
-    return output
-
-
-def gasuss_noise(image, mean=0, var=0.001):
-    '''
-        添加高斯噪声
-        mean : 均值
-        var : 方差
-    '''
-
-    image = np.array(image / 255, dtype=float)
-    noise = np.random.normal(mean, var ** 0.5, image.shape)
-    out = image + noise
-    if out.min() < 0:
-        low_clip = -1.
-    else:
-        low_clip = 0.
-    out = np.clip(out, low_clip, 1.0)
-    out = np.uint8(out * 255)
-
-    return out
-
-
 imges = []
 count = 0
 for jpgfile in glob.glob(r'D:\demo\PyPro\TJGradutionProData\img\*.jpg'):
     img = cv2.cvtColor(cv2.imread(jpgfile), cv2.COLOR_RGB2BGR)
     if 90000 < img.shape[0] * img.shape[1]:
+        img_name = jpgfile.split('\\')[-1]
         image_array = np.array(img, dtype=np.uint8)
         image_array = resize_image(image_array, 200)
         if len(image_array) == 0:
@@ -213,8 +171,8 @@ for jpgfile in glob.glob(r'D:\demo\PyPro\TJGradutionProData\img\*.jpg'):
         # plt.show()
         cropped_face, left, top = corp_face(image_array=aligned_face, size=200, landmarks=rotated_landmarks)
         finish_img = Image.fromarray(cropped_face)
-        finish_img.save(r'D:\demo\PyPro\TJGradutionProData\cropped\{}.jpg'.format(str(count)))
-        count+=1
+        finish_img.save(r'D:\demo\PyPro\TJGradutionProData\img-cropped\{0}.jpg'.format(img_name))
+        count += 1
         # plt.imshow(Image.fromarray(cropped_face))
         # transferred_landmarks = transfer_landmark(landmarks=rotated_landmarks, left=left, top=top)
         # visualize_landmark(image_array=cropped_face, landmarks=transferred_landmarks)

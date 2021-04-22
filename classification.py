@@ -1,3 +1,4 @@
+import glob
 import time
 import cv2
 import pytorch_msssim
@@ -6,18 +7,12 @@ import torchvision
 import matplotlib.pyplot as plt
 from PIL import Image
 from pandas import np
+from sklearn.model_selection import train_test_split
 from torch.utils.data import Dataset, DataLoader
 
 
 def Myloader(path):
     return Image.open(path).convert('RGB')
-
-
-def init_process(Xpath, ypath, len):
-    data = []
-    for i in range(len):
-        data.append([Xpath % i, ypath % i])
-    return data
 
 
 class MyDataset(Dataset):
@@ -27,7 +22,8 @@ class MyDataset(Dataset):
         self.loader = loder
 
     def __getitem__(self, item):
-        img, label = self.data[item]
+        img= self.data[item]
+        label = img.split('\\')[-1].split('_')[2]
         img = self.loader(img)
         img = self.transform(img)
         return img, label
@@ -41,13 +37,16 @@ def load_Data(train_size, test_size):
         torchvision.transforms.Resize((200, 200)),
         torchvision.transforms.ToTensor()
     ])
-    root = r'D:\demo\PyPro\TJGradutionProData'
-    train_data = init_process(root + r'\xtrain\%d.jpg', root + r'\ytrain\%d.jpg', train_size)
-    train_data = MyDataset(train_data, transform=transforms, loder=Myloader)
-    test_data = init_process(root + r'\xtest\%d.jpg', root + r'\ytest\%d.jpg', test_size)
-    test_data = MyDataset(test_data, transform=transforms, loder=Myloader)
+    img_name =[]
+    img_path = []
+    for jpgfile in glob.glob(r'D:\demo\PyPro\TJGradutionProData\cropped_lable\*.jpg'):
+        img_path.append(jpgfile)
+        img_name.append(jpgfile.split('\\')[-1])
+    X_train, X_test, y_train, y_test = train_test_split(img_path, img_name, test_size=0.7, shuffle=True)
+    train_data = MyDataset(X_train, transform=transforms, loder=Myloader)
+    test_data = MyDataset(X_test, transform=transforms, loder=Myloader)
 
-    train_data = DataLoader(dataset=train_data, batch_size=4, num_workers=0, pin_memory=True)
+    train_data = DataLoader(dataset=train_data, batch_size=1, num_workers=0, pin_memory=True)
     test_data = DataLoader(dataset=test_data, batch_size=1, num_workers=0, pin_memory=True)
 
     return train_data, test_data
