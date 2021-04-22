@@ -84,43 +84,9 @@ class Net(torch.nn.Module):
 
 
 torch.backends.cudnn.benchmark = True
-model = Net().cuda()
-print(model)
-optimizer = torch.optim.Adam(model.parameters())
 loss_func = torch.nn.CrossEntropyLoss()
 train_loader, test_loader = load_Data()
-start = time.time()
-for epoch in range(10):
-    epoch_start = time.time()
-    print('epoch {}'.format(epoch + 1))
-    # training-----------------------------
-    train_loss = 0.
-    train_acc = 0.
-    for batch_x, batch_y in train_loader:
-        batch_x = batch_x.cuda()
-        batch_y = batch_y.cuda()
-        out = model(torch.autograd.Variable(batch_x, requires_grad=True))
-        loss = loss_func(out, batch_y)
-        train_loss += loss.item()
-        pred = torch.max(out, 1)[1]
-        train_correct = (pred == batch_y).sum()
-        train_acc += train_correct.item()
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-        del loss, out, batch_x, batch_y
-        torch.cuda.empty_cache()
-    print('Train Loss: {:.6f}, Acc: {:.6f}'.format(train_loss / (len(train_loader)), train_acc / (len(train_loader))))
-    epoch_end = time.time()
-    print('Time cost: {}'.format(str(epoch_end - epoch_start)))
-    if train_acc / (len(train_loader)) > 0.95:
-        break
-end = time.time()
-print('ALL time cost: {}'.format(str(end - start)))
-
-torch.save(model, 'classification.pkl')
-
-model.eval()
+model = torch.load(r'D:\demo\PyPro\TJGradutionPro\cnn\classification.pkl')
 eval_loss = 0.
 eval_acc = 0.
 with torch.no_grad():
