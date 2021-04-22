@@ -13,7 +13,7 @@ def Myloader(path):
 
 
 noise_path = []
-for jpgfile in glob.glob(r'D:\demo\PyPro\TJGradutionProData\cropped_lable\*.jpg'):
+for jpgfile in glob.glob(r'D:\demo\PyPro\TJGradutionProData\img-cropped-noise\*.jpg'):
     noise_path.append(jpgfile)
 
 
@@ -43,7 +43,7 @@ class Net(torch.nn.Module):
         return conv3_out
 
 
-model = torch.load('cnn-bn10.pkl')
+model = torch.load(r'D:\demo\PyPro\TJGradutionPro\cnn\cnn-cropped.pkl')
 model.eval()
 with torch.no_grad():
     for path in noise_path:
@@ -59,4 +59,4 @@ with torch.no_grad():
         # plt.imshow(mat)
         # plt.show()
         mat = Image.fromarray(mat)
-        mat.save(r'D:\demo\PyPro\TJGradutionProData\testResult-bn10\{}'.format(img_name))
+        mat.save(r'D:\demo\PyPro\TJGradutionProData\img-cropped-denoise\{}'.format(img_name))

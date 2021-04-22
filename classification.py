@@ -1,12 +1,11 @@
 import glob
 import time
-import cv2
-import pytorch_msssim
+
+import numpy as np
 import torch
 import torchvision
 import matplotlib.pyplot as plt
 from PIL import Image
-from pandas import np
 from sklearn.model_selection import train_test_split
 from torch.utils.data import Dataset, DataLoader
 
@@ -26,23 +25,23 @@ class MyDataset(Dataset):
         label = img.split('\\')[-1].split('_')[2]
         img = self.loader(img)
         img = self.transform(img)
-        return img, label
+        return img, int(label)
 
     def __len__(self):
         return len(self.data)
 
 
-def load_Data(train_size, test_size):
+def load_Data():
     transforms = torchvision.transforms.Compose([
         torchvision.transforms.Resize((200, 200)),
         torchvision.transforms.ToTensor()
     ])
     img_name =[]
     img_path = []
-    for jpgfile in glob.glob(r'D:\demo\PyPro\TJGradutionProData\cropped_lable\*.jpg'):
+    for jpgfile in glob.glob(r'D:\demo\PyPro\TJGradutionProData\img-cropped-denoise\*.jpg'):
         img_path.append(jpgfile)
         img_name.append(jpgfile.split('\\')[-1])
-    X_train, X_test, y_train, y_test = train_test_split(img_path, img_name, test_size=0.7, shuffle=True)
+    X_train, X_test, y_train, y_test = train_test_split(img_path, img_name, test_size=0.3, shuffle=True)
     train_data = MyDataset(X_train, transform=transforms, loder=Myloader)
     test_data = MyDataset(X_test, transform=transforms, loder=Myloader)
 
@@ -58,21 +57,21 @@ class Net(torch.nn.Module):
         self.conv1 = torch.nn.Sequential(
             torch.nn.Conv2d(3, 32, 3, 1, 1),
             torch.nn.ReLU(),
-            torch.nn.MaxPool2d(2))
+            torch.nn.MaxPool2d(4))
         self.conv2 = torch.nn.Sequential(
             torch.nn.Conv2d(32, 64, 3, 1, 1),
             torch.nn.ReLU(),
-            torch.nn.MaxPool2d(2)
+            torch.nn.MaxPool2d(4)
         )
         self.conv3 = torch.nn.Sequential(
             torch.nn.Conv2d(64, 64, 3, 1, 1),
             torch.nn.ReLU(),
-            torch.nn.MaxPool2d(2)
+            torch.nn.MaxPool2d(4)
         )
         self.dense = torch.nn.Sequential(
             torch.nn.Linear(64 * 3 * 3, 128),
             torch.nn.ReLU(),
-            torch.nn.Linear(128, 3)
+            torch.nn.Linear(128, 5)
         )
 
     def forward(self, x):
@@ -87,11 +86,9 @@ class Net(torch.nn.Module):
 torch.backends.cudnn.benchmark = True
 model = Net().cuda()
 print(model)
-train_size = 5000
-test_size = 200
 optimizer = torch.optim.Adam(model.parameters())
 loss_func = torch.nn.CrossEntropyLoss()
-train_loader, test_loader = load_Data(train_size, test_size)
+train_loader, test_loader = load_Data()
 start = time.time()
 for epoch in range(10):
     epoch_start = time.time()
@@ -104,10 +101,10 @@ for epoch in range(10):
         batch_y = batch_y.cuda()
         out = model(torch.autograd.Variable(batch_x, requires_grad=True))
         loss = loss_func(out, batch_y)
-        train_loss += loss.data[0]
+        train_loss += loss.item()
         pred = torch.max(out, 1)[1]
         train_correct = (pred == batch_y).sum()
-        train_acc += train_correct.data[0]
+        train_acc += train_correct.item()
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
@@ -116,7 +113,7 @@ for epoch in range(10):
     print('Train Loss: {:.6f}, Acc: {:.6f}'.format(train_loss / (len(train_loader)), train_acc / (len(train_loader))))
     epoch_end = time.time()
     print('Time cost: {}'.format(str(epoch_end - epoch_start)))
-    if train_acc / (len(train_loader)) > 0.99:
+    if train_acc / (len(train_loader)) > 0.95:
         break
 end = time.time()
 print('ALL time cost: {}'.format(str(end - start)))
@@ -132,8 +129,8 @@ with torch.no_grad():
         batch_y = batch_y.cuda()
         out = model(batch_x)
         loss = loss_func(out, batch_y)
-        eval_loss += loss.data[0]
+        eval_loss += loss.item()
         pred = torch.max(out, 1)[1]
         num_correct = (pred == batch_y).sum()
-        eval_acc += num_correct.data[0]
+        eval_acc += num_correct.item()
     print('Test Loss: {:.6f}, Acc: {:.6f}'.format(eval_loss / (len(test_loader)), eval_acc / (len(test_loader))))
