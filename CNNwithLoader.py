@@ -41,7 +41,7 @@ class MyDataset(Dataset):
 
 def load_Data(train_size, test_size):
     transforms = torchvision.transforms.ToTensor()
-    root = r'D:\demo\PyPro\TJGradutionProData'
+    root = r'D:\demo\PyPro\TJGradutionProData\cropped'
     train_data = init_process(root + r'\xtrain\%d.jpg', root + r'\ytrain\%d.jpg', train_size)
     train_data = MyDataset(train_data, transform=transforms, loder=Myloader)
     test_data = init_process(root + r'\xtest\%d.jpg', root + r'\ytest\%d.jpg', test_size)
@@ -84,8 +84,8 @@ model = Net().cuda()
 print(model)
 
 optimizer = torch.optim.Adam(model.parameters())
-# loss_func = pytorch_msssim.SSIM()
-loss_func = torch.nn.L1Loss()
+# loss_func = pytorch_msssim.MS_SSIM()
+loss_func = torch.nn.MSELoss()
 train_loader, test_loader = load_Data(5000, 200)
 start = time.time()
 for epoch in range(30):
@@ -107,13 +107,12 @@ for epoch in range(30):
     print('Train Loss: {:.6f}'.format(train_loss / (len(train_loader))))
     epoch_end = time.time()
     print('Time cost: {}'.format(str(epoch_end - epoch_start)))
-    if (train_loss / (len(train_loader))) < 0.01:
+    if (train_loss / (len(train_loader))) < 0.001:
         break
 end = time.time()
 print('ALL time cost: {}'.format(str(end - start)))
 
-torch.save(model, 'cnn-bn10.pkl')
-torch.save(model.state_dict(), 'cnn_para-bn10.pkl')
+torch.save(model, 'cnn-L2-bn1.pkl')
 
 model.eval()
 eval_loss = 0.
@@ -133,6 +132,6 @@ with torch.no_grad():
         # plt.imshow(mat)
         # plt.show()
         mat = Image.fromarray(mat)
-        mat.save(r'D:\demo\PyPro\TJGradutionProData\testResult-bn10\{}.jpg'.format(str(count)))
+        mat.save(r'D:\demo\PyPro\TJGradutionProData\cropped\testResult-L2\{}.jpg'.format(str(count)))
         count += 1
     print('Test Loss: {:.6f}'.format(eval_loss / (len(test_loader))))
