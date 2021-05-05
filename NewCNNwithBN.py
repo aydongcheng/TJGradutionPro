@@ -44,13 +44,13 @@ def load_Data(train_size, test_size):
         torchvision.transforms.Resize((200, 200)),
         torchvision.transforms.ToTensor()
     ])
-    root = r'D:\demo\PyPro\TJGradutionProData'
+    root = r'D:\demo\PyPro\TJGradutionProData\cropped'
     train_data = init_process(root + r'\xtrain\%d.jpg', root + r'\ytrain\%d.jpg', train_size)
     train_data = MyDataset(train_data, transform=transforms, loder=Myloader)
     test_data = init_process(root + r'\xtest\%d.jpg', root + r'\ytest\%d.jpg', test_size)
     test_data = MyDataset(test_data, transform=transforms, loder=Myloader)
 
-    train_data = DataLoader(dataset=train_data, batch_size=4, num_workers=0, pin_memory=True)
+    train_data = DataLoader(dataset=train_data, batch_size=8, num_workers=0, pin_memory=True)
     test_data = DataLoader(dataset=test_data, batch_size=1, num_workers=0, pin_memory=True)
 
     return train_data, test_data
@@ -67,7 +67,7 @@ class Net(torch.nn.Module):
             for i in range(self.block_size):
                 self.conv.add_module("conv2 " + str(d * self.block_size + i), torch.nn.Sequential(
                     torch.nn.Conv2d(64, 64, (3, 3), 1, 1),
-                    torch.nn.BatchNorm2d(64),
+                    # torch.nn.BatchNorm2d(64),
                     torch.nn.ReLU()))
         self.conv.add_module("conv3", torch.nn.Sequential(torch.nn.Conv2d(64, 3, (3, 3), 1, 1)))
 
@@ -118,7 +118,6 @@ end = time.time()
 print('ALL time cost: {}'.format(str(end - start)))
 
 torch.save(model, 'cnn-bn4.pkl')
-torch.save(model.state_dict(), 'cnn_para-bn4.pkl')
 
 model.eval()
 eval_loss = 0.
@@ -138,6 +137,6 @@ with torch.no_grad():
         # plt.imshow(mat)
         # plt.show()
         mat = Image.fromarray(mat)
-        mat.save(r'D:\demo\PyPro\TJGradutionProData\testResult-bn4\{}.jpg'.format(str(count)))
+        mat.save(r'D:\demo\PyPro\TJGradutionProData\cropped\testResult-bn4\{}.jpg'.format(str(count)))
         count += 1
     print('Test Loss: {:.6f}'.format(eval_loss / test_size))
